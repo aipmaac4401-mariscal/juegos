@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Canto de las Mariposas – Juego Educativo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:Georgia,'Times New Roman',serif;
+  background:linear-gradient(135deg,#0a1628 0%,#0d2a1a 40%,#1a0a2e 100%);
+  min-height:100vh;color:#f0ead6;overflow-x:hidden;
+  user-select:none;-webkit-user-select:none;
+}
+/* ─ ANIMATED BG ─ */
+.stars{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;}
+.star{position:absolute;border-radius:50%;animation:twinkle linear infinite;}
+@keyframes twinkle{0%,100%{opacity:0.1}50%{opacity:0.6}}
+.bf{position:absolute;font-size:1.2rem;opacity:0.08;animation:floatUp linear infinite;}
+@keyframes floatUp{
+  0%{transform:translateY(110vh) translateX(0) rotate(0);opacity:0;}
+  10%{opacity:0.1;}90%{opacity:0.07;}
+  100%{transform:translateY(-10vh) translateX(40px) rotate(15deg);opacity:0;}
+}
+/* ─ SCREENS ─ */
+.screen{display:none;position:relative;z-index:10;min-height:100vh;padding:20px;
+  flex-direction:column;align-items:center;justify-content:center;}
+.screen.active{display:flex;}
+/* ─ CARD ─ */
+.card{
+  background:rgba(10,22,40,0.82);backdrop-filter:blur(12px);
+  border:1px solid rgba(212,175,55,0.3);border-radius:20px;
+  padding:32px;max-width:700px;width:100%;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.05);
+  animation:cardIn .4s ease;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.card.scroll{max-height:92vh;overflow-y:auto;}
+.card.scroll::-webkit-scrollbar{width:5px;}
+.card.scroll::-webkit-scrollbar-thumb{background:rgba(212,175,55,0.3);border-radius:3px;}
+/* ─ TYPOGRAPHY ─ */
+.game-title{
+  font-size:2.1rem;text-align:center;
+  background:linear-gradient(135deg,#d4af37,#f5e68a,#d4af37);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:4px;line-height:1.2;
+}
+.game-sub{font-size:0.9rem;text-align:center;color:#b8a878;margin-bottom:18px;font-style:italic;}
+.emoji-title{font-size:3rem;text-align:center;display:block;margin-bottom:8px;animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.motivator{
+  color:#c8b87a;font-style:italic;text-align:center;
+  font-size:0.93rem;margin:10px 0;padding:10px 14px;
+  border-left:3px solid rgba(212,175,55,0.5);border-right:3px solid rgba(212,175,55,0.5);
+  background:rgba(212,175,55,0.05);border-radius:8px;
+}
+/* ─ FORM ─ */
+label{font-size:0.85rem;color:#b8a878;margin-bottom:4px;display:block;letter-spacing:0.5px;}
+input{
+  width:100%;padding:12px 15px;border-radius:10px;
+  border:1px solid rgba(212,175,55,0.25);background:rgba(255,255,255,0.05);
+  color:#f0ead6;font-size:0.95rem;margin-bottom:13px;outline:none;font-family:inherit;
+  transition:border .2s;
+}
+input:focus{border-color:rgba(212,175,55,0.6);}
+input::placeholder{color:rgba(240,234,214,0.3);}
+/* ─ BUTTONS ─ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:12px 26px;border-radius:12px;font-size:0.95rem;font-weight:700;
+  cursor:pointer;border:none;transition:all .2s;font-family:inherit;
+  letter-spacing:0.3px;
+}
+.btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.4);}
+.btn:active:not(:disabled){transform:translateY(0);}
+.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none !important;}
+.btn-gold{background:linear-gradient(135deg,#b8860b,#d4af37,#f5d060);color:#0a1628;}
+.btn-green{background:linear-gradient(135deg,#1b5e20,#2e7d32,#43a047);color:#fff;}
+.btn-slate{background:rgba(255,255,255,0.08);color:#f0ead6;border:1px solid rgba(255,255,255,0.15);}
+.btn-red{background:linear-gradient(135deg,#7f0000,#c62828,#e53935);color:#fff;}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px;}
+/* ─ TOP BAR ─ */
+#topBar{position:fixed;top:0;left:0;right:0;z-index:999;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 14px;background:rgba(10,22,40,0.9);
+  border-bottom:1px solid rgba(212,175,55,0.15);backdrop-filter:blur(8px);}
+#attemptBadge{
+  background:rgba(212,175,55,0.9);color:#0a1628;
+  border-radius:20px;padding:3px 12px;font-weight:700;font-size:0.78rem;display:none;
+}
+#fsBtn{
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+  color:#f0ead6;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.9rem;
+}
+/* ─ PROGRESS ─ */
+#progressWrap{margin-bottom:14px;}
+#progressBar{
+  width:100%;height:8px;background:rgba(255,255,255,0.08);
+  border-radius:4px;overflow:hidden;margin-bottom:5px;
+}
+#progressFill{
+  height:100%;background:linear-gradient(90deg,#2e7d32,#d4af37);
+  transition:width .5s cubic-bezier(.4,0,.2,1);
+}
+.prog-info{display:flex;justify-content:space-between;font-size:0.8rem;color:#b8a878;}
+#scoreBadge{font-weight:700;color:#d4af37;}
+/* ─ TIMER ─ */
+.q-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+#timerBox{
+  font-size:1.3rem;font-weight:700;padding:5px 14px;border-radius:10px;
+  min-width:68px;text-align:center;transition:all .5s;
+  background:rgba(46,125,50,0.25);color:#81c784;border:1px solid rgba(46,125,50,0.4);
+}
+#timerBox.orange{background:rgba(230,81,0,0.25);color:#ffb74d;border-color:rgba(230,81,0,0.4);}
+#timerBox.red{background:rgba(183,28,28,0.25);color:#ef9a9a;border-color:rgba(183,28,28,0.4);animation:redPulse 1s ease-in-out infinite;}
+@keyframes redPulse{0%,100%{opacity:1}50%{opacity:.7}}
+/* ─ LEVEL BADGE ─ */
+#levelBadge{font-size:0.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  padding:4px 12px;border-radius:20px;display:inline-block;}
+.b-lit{background:rgba(33,150,243,0.18);color:#90caf9;border:1px solid rgba(33,150,243,0.4);}
+.b-inf{background:rgba(156,39,176,0.18);color:#ce93d8;border:1px solid rgba(156,39,176,0.4);}
+.b-cri{background:rgba(255,87,34,0.18);color:#ffab91;border:1px solid rgba(255,87,34,0.4);}
+.b-soc{background:rgba(212,175,55,0.18);color:#d4af37;border:1px solid rgba(212,175,55,0.4);}
+/* ─ PASSAGE ─ */
+.passage{
+  background:rgba(212,175,55,0.06);border-left:3px solid rgba(212,175,55,0.5);
+  padding:14px 16px;border-radius:0 10px 10px 0;
+  font-size:0.88rem;line-height:1.65;color:#c8b87a;margin-bottom:14px;font-style:italic;
+}
+/* ─ QUESTION ─ */
+.qtext{font-size:1rem;font-weight:700;margin-bottom:14px;line-height:1.5;color:#f0ead6;}
+/* ─ OPTIONS ─ */
+.options{display:flex;flex-direction:column;gap:9px;margin-bottom:16px;}
+.option{
+  padding:11px 15px;border-radius:10px;cursor:pointer;
+  border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);
+  transition:all .2s;font-size:0.9rem;display:flex;align-items:flex-start;gap:10px;
+  color:#e8e0cc;
+}
+.option:hover:not(.disabled){background:rgba(212,175,55,0.1);border-color:rgba(212,175,55,0.35);transform:translateX(4px);}
+.option.selected{border-color:#d4af37;background:rgba(212,175,55,0.12);}
+.option.correct{border-color:#4caf50;background:rgba(76,175,80,0.15);color:#a5d6a7;}
+.option.wrong{border-color:#f44336;background:rgba(244,67,54,0.15);color:#ef9a9a;}
+.option.disabled{cursor:not-allowed;transform:none !important;}
+.opt-ltr{
+  width:24px;height:24px;border-radius:50%;border:1px solid rgba(255,255,255,0.25);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:0.75rem;flex-shrink:0;margin-top:1px;
+}
+/* ─ FEEDBACK ─ */
+#feedback{
+  padding:13px 15px;border-radius:11px;font-size:0.88rem;line-height:1.55;
+  margin-bottom:13px;display:none;animation:slideDown .3s ease;
+}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+#feedback.correct{background:rgba(27,94,32,0.3);border:1px solid #4caf50;color:#a5d6a7;}
+#feedback.wrong{background:rgba(127,0,0,0.25);border:1px solid #f44336;color:#ef9a9a;}
+/* ─ FINAL SCREEN ─ */
+.award-icon{font-size:5rem;text-align:center;display:block;margin:8px 0;
+  animation:popIn .6s cubic-bezier(.18,1.8,.5,1);}
+@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+.final-name{font-size:1.4rem;color:#d4af37;text-align:center;font-weight:700;margin:4px 0;}
+.final-score{font-size:2.8rem;font-weight:700;color:#fff;text-align:center;margin:4px 0;}
+.final-pct{font-size:1rem;color:#b8a878;text-align:center;margin-bottom:10px;}
+.award-box{
+  background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.3);
+  border-radius:12px;padding:16px;margin:12px 0;text-align:center;
+}
+.award-title{font-size:1.1rem;font-weight:700;color:#d4af37;margin-bottom:6px;}
+.award-msg{font-size:0.88rem;color:#c8b87a;line-height:1.6;}
+/* ─ LEADERBOARD ─ */
+.lb-table{width:100%;border-collapse:collapse;font-size:0.83rem;margin-top:8px;}
+.lb-table th{background:rgba(212,175,55,0.15);padding:7px 10px;color:#d4af37;text-align:left;border-bottom:1px solid rgba(212,175,55,0.2);}
+.lb-table td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.05);color:#e8e0cc;}
+.lb-table tr:nth-child(1) td{color:#ffd700;}
+.lb-table tr:nth-child(2) td{color:#c0c0c0;}
+.lb-table tr:nth-child(3) td{color:#cd7f32;}
+/* ─ SECTION HEADERS ─ */
+.section-head{font-size:0.82rem;color:#b8a878;letter-spacing:1px;text-transform:uppercase;
+  margin:18px 0 8px;padding-bottom:6px;border-bottom:1px solid rgba(212,175,55,0.2);}
+#adminSection{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08);}
+#certCanvas{display:none;}
+
+/* ─ INTRO DECORATION ─ */
+.divider{width:60px;height:2px;background:linear-gradient(90deg,transparent,#d4af37,transparent);margin:12px auto;}
+
+@media(max-width:580px){
+  .card{padding:18px;}
+  .game-title{font-size:1.5rem;}
+  #timerBox{font-size:1.1rem;padding:4px 10px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ANIMATED BG -->
+<div class="stars" id="bgLayer"></div>
+<!-- TOP BAR -->
+<div id="topBar">
+  <div id="attemptBadge"></div>
+  <div style="flex:1"></div>
+  <button id="fsBtn" title="Pantalla completa">⛶ Pantalla completa</button>
+</div>
+
+<!-- ════════════════ SCREEN: INTRO ════════════════ -->
+<div class="screen active" id="sIntro" style="padding-top:60px;">
+  <div class="card" style="max-width:520px;">
+    <span class="emoji-title">🦋</span>
+    <h1 class="game-title">El Canto de las Mariposas</h1>
+    <p class="game-sub">Juego Educativo · Arte y Cultura · Comprensión Lectora</p>
+    <div class="divider"></div>
+    <p class="motivator">"Mientras alguien recuerde y cuente, un pueblo nunca desaparece."</p>
+    <br>
+    <label for="iName">👤 Nombre completo del estudiante</label>
+    <input type="text" id="iName" placeholder="Escribe tu nombre completo...">
+    <label for="iGrade">📚 Grado</label>
+    <input type="text" id="iGrade" placeholder="Ej: 3°">
+    <label for="iSection">🏫 Sección</label>
+    <input type="text" id="iSection" placeholder="Ej: A">
+    <div class="btn-row">
+      <button class="btn btn-gold" id="btnStart">🦋 Iniciar Aventura</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SCREEN: WELCOME ════════════════ -->
+<div class="screen" id="sWelcome" style="padding-top:60px;">
+  <div class="card" style="max-width:600px;text-align:center;">
+    <span class="emoji-title">🌿✨🦋</span>
+    <h1 class="game-title" id="wTitle">¡Bienvenido/a!</h1>
+    <div class="divider"></div>
+    <p id="wMsg" style="color:#c8b87a;line-height:1.75;font-size:0.97rem;margin:14px 0;"></p>
+    <p class="motivator" id="wMot"></p>
+    <div class="btn-row" style="margin-top:22px;">
+      <button class="btn btn-gold" id="btnGoGame">🚀 Comenzar el desafío</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SCREEN: QUESTION ════════════════ -->
+<div class="screen" id="sQuestion" style="padding:70px 14px 20px;">
+  <div class="card scroll" style="max-width:720px;">
+    <div id="progressWrap">
+      <div id="progressBar"><div id="progressFill" style="width:0%"></div></div>
+      <div class="prog-info">
+        <span id="progText">Pregunta 1 / 20</span>
+        <span>Puntaje: <span id="scoreBadge">0 pts</span></span>
+      </div>
+    </div>
+    <div class="q-header">
+      <span id="levelBadge" class="b-lit">Nivel Literal</span>
+      <div id="timerBox">2:00</div>
+    </div>
+    <div class="passage" id="passageTxt"></div>
+    <div class="qtext" id="questionTxt"></div>
+    <div class="options" id="optsCont"></div>
+    <div id="feedback"></div>
+    <div class="btn-row">
+      <button class="btn btn-green" id="btnSend">✔ Enviar respuesta</button>
+      <button class="btn btn-slate" id="btnNext" disabled>Siguiente ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SCREEN: FINAL ════════════════ -->
+<div class="screen" id="sFinal" style="padding-top:60px;">
+  <div class="card scroll" style="max-width:680px;">
+    <span class="award-icon" id="awardIcon">🦋</span>
+    <div class="final-name" id="fName"></div>
+    <div class="final-score" id="fScore"></div>
+    <div class="final-pct" id="fPct"></div>
+    <div class="award-box">
+      <div class="award-title" id="awardTitle"></div>
+      <div class="award-msg" id="awardMsg"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-gold" id="btnCert">📜 Descargar Certificado</button>
+    </div>
+    <canvas id="certCanvas" width="900" height="620"></canvas>
+
+    <p class="section-head">🏆 Tabla de Clasificación</p>
+    <table class="lb-table">
+      <thead><tr><th>#</th><th>Estudiante</th><th>Puntaje</th><th>%</th><th>Intentos</th></tr></thead>
+      <tbody id="lbBody"></tbody>
+    </table>
+
+    <div id="adminSection">
+      <p class="section-head">⚙️ Panel Docente</p>
+      <button class="btn btn-slate" id="btnCSV" style="font-size:0.82rem;padding:8px 16px;">📥 Exportar resultados CSV</button>
+    </div>
+
+    <div class="btn-row" style="margin-top:22px;">
+      <button class="btn btn-gold" id="btnRestart">🔄 Reiniciar juego</button>
+      <button class="btn btn-red" id="btnExit">✕ Salir</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// ANIMATED BACKGROUND
+// ══════════════════════════════════════════════════
+(function(){
+  const bg=document.getElementById('bgLayer');
+  // Stars
+  for(let i=0;i<60;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    const sz=Math.random()*2+1;
+    s.style.cssText=`width:${sz}px;height:${sz}px;background:rgba(255,255,200,0.7);
+      top:${Math.random()*100}%;left:${Math.random()*100}%;
+      animation-duration:${2+Math.random()*4}s;animation-delay:${Math.random()*4}s;`;
+    bg.appendChild(s);
+  }
+  // Butterflies
+  ['🦋','🦋','🦋','🌿','✨','🦋'].forEach(c=>{
+    for(let j=0;j<3;j++){
+      const b=document.createElement('div');
+      b.className='bf'; b.textContent=c;
+      b.style.cssText=`left:${Math.random()*100}%;
+        animation-duration:${10+Math.random()*12}s;
+        animation-delay:${Math.random()*15}s;
+        font-size:${0.9+Math.random()*1.2}rem;`;
+      bg.appendChild(b);
+    }
+  });
+})();
+
+// ══════════════════════════════════════════════════
+// FULLSCREEN
+// ══════════════════════════════════════════════════
+document.getElementById('fsBtn').onclick=()=>{
+  if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+  else document.exitFullscreen();
+};
+
+// ══════════════════════════════════════════════════
+// ANTI-COPY (only active during quiz)
+// ══════════════════════════════════════════════════
+document.addEventListener('contextmenu',e=>e.preventDefault());
+let visGuard=false;
+document.addEventListener('visibilitychange',()=>{
+  if(visGuard&&document.hidden){
+    alert('⚠️ Intento de copia detectado. El cuestionario se reiniciará.');
+    location.reload();
+  }
+});
+
+// ══════════════════════════════════════════════════
+// QUESTION BANK — orden cronológico estricto del guion
+// 1-4   Lima (Rember en la ciudad)
+// 5-9   Visita a sus padres en la Amazonía
+// 10-13 Viaje a La Chorrera
+// 14-16 Casa Arana
+// 17-19 Encuentro con pobladores de La Chorrera
+// 20    Retorno a Lima
+// ══════════════════════════════════════════════════
+const RAW=[
+
+/* ══ BLOQUE 1: LIMA ══════════════════════════════
+   Fuente: guion, primeras escenas — Rember en su
+   departamento frente al lienzo, Plaza San Martín.
+   ═════════════════════════════════════════════════ */
+
+/* 1 · Literal */
+{lv:'Literal',lc:'b-lit',
+ pass:'Rember abre la ventana que da hacia la calle y dice: "Soy Witoto del clan de la Garza Blanca y en el Perú, el clan nuestro, somos muy pocos, solo dos familias."',
+ q:'¿A qué clan Witoto pertenece Rember y cuántas familias de ese clan quedan en el Perú?',
+ ok:'Al clan de la Garza Blanca; solo dos familias',
+ d:['Al clan del Jaguar; tres familias','Al clan del Águila Real; una sola familia','Al clan de la Serpiente; cuatro familias'],
+ ex:'Rember lo declara desde la ventana de su departamento en Lima: pertenece al clan de la Garza Blanca y en Perú solo quedan dos familias de ese clan.'},
+
+/* 2 · Literal */
+{lv:'Literal',lc:'b-lit',
+ pass:'Rember dice frente al lienzo: "Mi abuelita Martha solía pensar, o creer, que yo iba a convertirme en una de sus voces. No lo entendí del todo hasta hace muy poco. Martha está aquí, siempre conmigo, cuando fumo tabaco, cuando sostengo el pincel..."',
+ q:'¿Qué papel creía Martha que cumpliría Rember según sus propias palabras?',
+ ok:'Convertirse en una de sus voces para preservar su memoria',
+ d:['Ser el guardián de las tierras amazónicas del clan','Convertirse en el jefe espiritual del pueblo Witoto','Enseñar la lengua Witoto en las escuelas de Lima'],
+ ex:'Rember cita directamente a Martha: ella siempre creyó que él se convertiría en "una de sus voces", es decir, en quien transmitiría su legado. Rember confiesa que no lo entendió del todo hasta hace poco.'},
+
+/* 3 · Inferencial */
+{lv:'Inferencial',lc:'b-inf',
+ pass:'Rember confiesa mientras pinta: "Mi mayor preocupación es si realmente soy un buen traductor de lo que me dio mi abuela. Escucho la voz de mi abuela cuando pinto. Y si puedo oír su voz, imagino que la pintura estará bien."',
+ q:'¿Qué revela esta reflexión sobre la manera en que Rember valora su propio trabajo artístico?',
+ ok:'Evalúa su arte por la fidelidad a la memoria de Martha, no por criterios estéticos',
+ d:['Considera que la calidad técnica del trazo es lo más importante en su obra','Cree que sus pinturas solo serán buenas si las validan otros artistas indígenas','Piensa que escuchar a Martha es una señal de que está enfermo y necesita descansar'],
+ ex:'La pregunta "¿soy un buen traductor?" revela que Rember no mide su arte por la belleza, sino por la fidelidad al legado de Martha. Oír su voz mientras pinta es para él la confirmación de que está cumpliendo su misión.'},
+
+/* 4 · Socrático */
+{lv:'Socrático',lc:'b-soc',
+ pass:'Rember dice caminando por Lima: "Mi abuela Martha me ha hablado de la tragedia del caucho. Sus tíos habían muerto quemados en la casa comunal. La gente había sido azotada, muchos murieron en la trampa de tortura. Y comprendí que esta parte de la historia también necesitaba ser contada. Pero en este momento de mi vida, no sale de mi pincel."',
+ q:'🔍 Pregunta Socrática: Rember siente que la historia del caucho "necesita ser contada" pero "no sale de su pincel". ¿Qué supuestos sobre el arte y la responsabilidad subyacen en esa tensión?',
+ ok:'El arte impone una obligación moral al artista: no basta con conocer el dolor ajeno, hay que estar listo interiormente para poder transmitirlo con honestidad',
+ d:['El artista solo debe pintar lo que el mercado cultural demanda en cada época','La historia de los pueblos indígenas no puede contarse a través de la pintura','Rember no tiene la técnica suficiente para representar escenas históricas violentas'],
+ ex:'Esta tensión revela el supuesto de que el arte auténtico exige madurez emocional y espiritual. Rember no evita el tema por cobardía, sino porque intuye que pintarlo sin estar preparado sería una traición a quienes sufrieron. La obligación moral del artista va más allá del conocimiento intelectual.'},
+
+/* ══ BLOQUE 2: VISITA A SUS PADRES ══════════════
+   Fuente: guion — regreso a la Amazonía peruana,
+   vida familiar, máscaras, tabaco, árbol de caucho.
+   ═════════════════════════════════════════════════ */
+
+/* 5 · Literal */
+{lv:'Literal',lc:'b-lit',
+ pass:'La madre de Rember les dice a sus hijos mientras elabora máscaras: "Cuando entras en los campos puedes sentir a los espíritus observándote. Se transforman en pájaros, en una boa, un tigre, convertido en mariposas. Son personas que han muerto. Eso fue lo que nos dijo la abuela."',
+ q:'Según la madre de Rember, ¿en qué seres se transforman los espíritus de los muertos al entrar en los campos?',
+ ok:'En pájaros, boa, tigre y mariposas',
+ d:['En árboles, ríos y piedras sagradas','En nubes, viento y rayos durante la tormenta','En seres invisibles que solo los chamanes pueden ver'],
+ ex:'La madre enumera textualmente las formas animales que toman los espíritus: pájaros, boa, tigre y mariposas. Añade que esto lo enseñó la abuela, reforzando la cadena de transmisión oral Witoto.'},
+
+/* 6 · Literal */
+{lv:'Literal',lc:'b-lit',
+ pass:'La madre dice a sus hijos sobre las máscaras: "Hago todo tipo de máscaras. Hay caras de búho, caras de hormiga. Y esas máscaras no son algo nuevo. Esas máscaras son una tradición del pasado. Se usaban en fiestas, en bailes, en la casa larga."',
+ q:'¿En qué ocasiones se usaban las máscaras tradicionales Witoto según la madre de Rember?',
+ ok:'En fiestas, en bailes y en la casa larga',
+ d:['Solo en ceremonias fúnebres para despedir a los muertos','Únicamente en rituales de curación con el chamán','En intercambios comerciales con otros clanes de la región'],
+ ex:'La madre es explícita: las máscaras se usaban en fiestas, bailes y en la casa larga. Subraya que no son una invención reciente sino una tradición del pasado, lo que las conecta con la identidad ancestral Witoto.'},
+
+/* 7 · Inferencial */
+{lv:'Inferencial',lc:'b-inf',
+ pass:'Rember le dice a su madre: "Le estaba preguntando a papá cómo se dice mariposa en Witoto. No sabía cómo." La madre responde: "Cuando me casé con tu papá comencé a aprender sobre cultura. Antes no. Mi madre nunca nos habló de eso. Así que ahora aprovecha al máximo a tu papá."',
+ q:'¿Qué nos revela este diálogo sobre la fragilidad de la transmisión cultural dentro de la familia Yahuarcani?',
+ ok:'La identidad cultural no se hereda automáticamente; puede interrumpirse si nadie la enseña de forma activa en cada generación',
+ d:['La cultura Witoto solo se transmite en ceremonias formales, nunca en conversaciones cotidianas','La madre siempre tuvo un conocimiento profundo de su identidad indígena','La lengua Witoto es tan difícil que solo los padres varones pueden aprenderla'],
+ ex:'La madre admite que no recibió esa transmisión de niña porque su propia madre nunca le habló de ello. Esto revela que la identidad cultural es frágil: puede perderse en una sola generación si nadie la enseña conscientemente.'},
+
+/* 8 · Literal */
+{lv:'Literal',lc:'b-lit',
+ pass:'El padre de Rember le extiende una vasija y le dice: "Maijerame. Lame el ampiri para obtener fuerza y energía." Más tarde le explica: "Cuando caminas solo en la jungla, toma esto y haz que camine contigo. Al lamer esto, llamamos a los ancestros. Todos los abuelos que han fallecido, cuando huelen esto, bajan rápidamente."',
+ q:'¿Para qué sirve el ampiri según la enseñanza del padre de Rember?',
+ ok:'Para obtener fuerza, alejar los malos espíritus y llamar a los ancestros fallecidos',
+ d:['Para curar enfermedades físicas producidas por la mordedura de animales','Para marcar el territorio del clan y avisar a otros grupos','Para preparar el pigmento natural usado en las pinturas ceremoniales'],
+ ex:'El padre explica que el ampiri (tabaco concentrado) tiene tres funciones: dar fuerza y energía, alejar a los malos espíritus y convocar la presencia espiritual de los ancestros. Es un objeto sagrado de comunicación espiritual.'},
+
+/* 9 · Crítico */
+{lv:'Crítico',lc:'b-cri',
+ pass:'Rember y su padre hacen incisiones en un árbol de caucho. De las heridas del árbol brota látex blanco. En silencio, resuena en la mente de Rember la voz de Martha: "Así trabajaban nuestros padres, así extraían el caucho. Y así fue como nos arrancaron la raíz. Nos mataron, nos arrojaron al fuego. ¿Quién contará nuestra historia?"',
+ q:'¿Por qué es significativo que Rember practique físicamente la extracción del caucho junto a su padre en lugar de solo escuchar relatos sobre ello?',
+ ok:'Porque vivirlo corporalmente conecta el sufrimiento histórico con su presente, transformando la historia abstracta en una experiencia personal que impulsa su misión artística',
+ d:['Porque necesita aprender el oficio del caucho para tener ingresos económicos alternativos','Porque el padre quiere demostrar que la extracción de caucho ya no es peligrosa','Porque es un requisito ritual obligatorio antes de viajar a La Chorrera'],
+ ex:'Hacer la misma acción que hacían sus antepasados bajo explotación convierte la historia en cuerpo y en emoción. En ese momento la voz de Martha irrumpe con la pregunta clave: "¿Quién contará nuestra historia?". Rember entiende, de forma vivida, que esa pregunta le pertenece.'},
+
+/* ══ BLOQUE 3: VIAJE A LA CHORRERA ══════════════
+   Fuente: guion — río amazónico, llegada,
+   ceremonia de bienvenida, nombre Ribetiai.
+   ═════════════════════════════════════════════════ */
+
+/* 10 · Literal */
+{lv:'Literal',lc:'b-lit',
+ pass:'Los padres de Rember dialogan tras su partida. El padre dice: "Se encuentra en Putumayo, en estos días es territorio colombiano. Mi abuelo Gregorio y mi madre Martha tuvieron que abrirse camino por sí mismos. Tardó un mes y medio caminando desde Putumayo para terminar aquí en el Amazonas."',
+ q:'¿Cuánto tiempo tardaron los antepasados de Rember en recorrer desde Putumayo hasta la Amazonía peruana, según el padre?',
+ ok:'Un mes y medio caminando',
+ d:['Tres semanas en canoa por el río','Dos meses en embarcación de carga','Una semana a pie y luego en barca'],
+ ex:'El padre lo relata con precisión: el abuelo Gregorio y Martha tardaron un mes y medio caminando desde Putumayo (Colombia) hasta la Amazonía peruana porque en aquel entonces no había medios de transporte.'},
+
+/* 11 · Inferencial */
+{lv:'Inferencial',lc:'b-inf',
+ pass:'El padre dice a la madre tras partir Rember: "Cuando conoces tus orígenes, tus raíces, tus parientes, es realmente una ventaja. Él descubrirá las historias, las sabias palabras de los ancestros, sus creencias. Será muy bueno para Rember ir a La Chorrera."',
+ q:'¿Qué relación establece el padre entre conocer los propios orígenes y el desarrollo artístico de Rember?',
+ ok:'Conocer las raíces proporciona materiales espirituales e históricos que enriquecen y renuevan la creación artística',
+ d:['El padre cree que Rember debe abandonar la pintura y dedicarse a la artesanía tradicional','Según el padre, conocer los orígenes solo sirve para reforzar el orgullo personal, no el arte','El padre piensa que el viaje solo tiene valor turístico y no aportará nada nuevo a Rember'],
+ ex:'El padre conecta el conocimiento de los orígenes directamente con el arte: "descubrirá historias y sabias palabras". Esto implica que para él la identidad cultural es la fuente primaria de la creatividad artística de Rember.'},
+
+/* 12 · Literal */
+{lv:'Literal',lc:'b-lit',
+ pass:'Al llegar a La Chorrera, los comuneros cantan en su lengua. Se distingue con nitidez: "Llegó, llegó... el hijo de nuestros antepasados, del Clan de la Garza Blanca, Llegó entre nosotros. Ribetiai nos llegó. Su padre es la garza blanca."',
+ q:'¿Cómo reconoce la comunidad de La Chorrera a Rember en el canto de bienvenida?',
+ ok:'Como el hijo de sus antepasados del Clan de la Garza Blanca',
+ d:['Como el artista famoso que los pintó en sus cuadros en Lima','Como el enviado del gobierno peruano para documentar su cultura','Como un viajero desconocido que debe ser sometido a pruebas rituales'],
+ ex:'El canto de bienvenida identifica a Rember de forma precisa: "el hijo de nuestros antepasados, del Clan de la Garza Blanca". La comunidad lo reconoce por su linaje antes incluso de que él hable, lo que confirma que su identidad trasciende las fronteras geográficas.'},
+
+/* 13 · Crítico */
+{lv:'Crítico',lc:'b-cri',
+ pass:'Rember dice ante la comunidad de La Chorrera: "Estoy en este viaje porque escuché a mi abuela. Mi origen está aquí. No hay otro lugar. Todos los Witotos que viven en el lado peruano fueron sacados de aquí. Mi gran responsabilidad es asegurarme de que la palabra de mi abuela no se pierda."',
+ q:'¿Por qué afirmar que "mi origen está aquí" es un acto de resistencia cultural y no solo una declaración personal?',
+ ok:'Porque reivindica un territorio y una identidad colectiva que el desplazamiento forzado durante el caucho intentó borrar',
+ d:['Porque Rember quiere adquirir propiedades en Colombia para instalar un taller artístico','Porque declarar un origen en otro país le da ventajas legales como artista internacional','Porque el origen geográfico solo importa para los trámites de ciudadanía, no para la cultura'],
+ ex:'Decir "mi origen está aquí" tiene dimensión política: reconoce que los Witotos peruanos fueron arrancados de La Chorrera por la explotación cauchera. Reclamar ese origen es recuperar una identidad que el colonialismo trató de exterminar, no solo un dato biográfico.'},
+
+/* ══ BLOQUE 4: CASA ARANA ════════════════════════
+   Fuente: guion — visita con el tío, patio,
+   celdas, fotografía histórica.
+   ═════════════════════════════════════════════════ */
+
+/* 14 · Literal */
+{lv:'Literal',lc:'b-lit',
+ pass:'El tío de Rember en la Casa Arana dice: "Este es el patio donde tuvieron que reunirse para pesar los kilos de caucho que trajeron. Los que trajeron muy poco fueron azotados. Quienes no lograron alcanzar el objetivo fueron decapitados. Este es el mayor genocidio perpetrado contra los pueblos indígenas de esta zona."',
+ q:'¿Qué castigos recibían los indígenas que no cumplían las cuotas de caucho en la Casa Arana, según el tío?',
+ ok:'Los que traían poco caucho eran azotados; los que no alcanzaban el objetivo eran decapitados',
+ d:['Eran enviados a trabajar en otro puesto cauchero más alejado','Eran encarcelados sin comida durante varios días','Eran obligados a trabajar el doble sin paga adicional'],
+ ex:'El tío lo describe con precisión: el castigo era gradual según el incumplimiento. Traer poco caucho significaba azotes; no alcanzar el objetivo en absoluto significaba la decapitación. El tío califica estos hechos como "el mayor genocidio" contra los indígenas de la zona.'},
+
+/* 15 · Inferencial */
+{lv:'Inferencial',lc:'b-inf',
+ pass:'El tío de Rember dice sobre la Casa Arana: "Sí, después de los tiempos de goma aquí, esta casa daba miedo. Se oían voces, gritos. Y en uno de los patios, donde estaban las celdas, un tigre negro solía aparecer ahí, que no se pudo fotografiar."',
+ q:'¿Qué se puede inferir sobre el significado del tigre negro que aparecía en la Casa Arana según la memoria colectiva local?',
+ ok:'Es una manifestación espiritual de los muertos que permanece en el lugar donde sufrieron, coherente con la cosmovisión Witoto donde los espíritus se transforman en animales',
+ d:['Es un tigre salvaje real que ingresó al edificio abandonado en busca de alimento','Es una invención colectiva para asustar a los niños y que no se acerquen al edificio peligroso','Es un animal entrenado que los caucheros dejaron como centinela al abandonar el lugar'],
+ ex:'En la cosmovisión Witoto, los espíritus de los muertos se transforman en animales (como explicó la madre con las mariposas, el tigre, la boa). Un tigre negro imposible de fotografiar, que aparece en el lugar del genocidio, se infiere como presencia espiritual de las víctimas que permanecen en ese espacio de dolor.'},
+
+/* 16 · Socrático */
+{lv:'Socrático',lc:'b-soc',
+ pass:'Rember observa la Casa Arana y dice: "Mira, esta es la famosa Casa Arana, donde nuestros antepasados sufrieron tanto." Su tío añade: "Este es el mayor genocidio perpetrado contra los pueblos indígenas de esta zona."',
+ q:'🔍 Pregunta Socrática: ¿Qué evidencia del guion sustenta que la visita a la Casa Arana es un punto de transformación para Rember, no solo un recorrido turístico?',
+ ok:'Las palabras de Rember ("nuestros antepasados") y el testimonio directo del tío convierten el espacio físico en una experiencia de duelo y reconocimiento personal de la historia de su pueblo',
+ d:['Rember lleva una cámara para documentar la arquitectura colonial del edificio','La visita está organizada por una agencia de turismo cultural indígena','Rember no muestra ninguna reacción emocional durante el recorrido por la casa'],
+ ex:'Decir "nuestros antepasados sufrieron tanto" indica que Rember ya no es un observador externo: se reconoce como parte de esa historia. El tío, testigo generacional, confirma la magnitud del genocidio. Juntos, hacen del edificio un espacio de memoria viva, no solo un lugar histórico.'},
+
+/* ══ BLOQUE 5: ENCUENTRO CON POBLADORES ═════════
+   Fuente: guion — mujeres indígenas, canto,
+   relato de la masacre del clan Bofaiza,
+   mariposas emergentes.
+   ═════════════════════════════════════════════════ */
+
+/* 17 · Literal */
+{lv:'Literal',lc:'b-lit',
+ pass:'Un indígena narra a Rember: "Llegaron a una casa: Bienvenidos, cuelguen sus hamacas. Todos lo creyeron y se durmieron tranquilamente. Era medianoche. Entonces los capataces comenzaron a apilar caucho en el piso superior. Mientras dormían lanzaron fuego. Todas las personas que dormían allí murieron quemadas. No quedó nadie con vida. Fue entonces cuando el clan Bofaiza se extinguió."',
+ q:'¿Cómo fue exterminado el clan Bofaiza según el testimonio del indígena de La Chorrera?',
+ ok:'Los caucheros los engañaron ofreciéndoles alojamiento, los durmieron y quemaron la casa con ellos adentro a medianoche',
+ d:['Los atacaron abiertamente durante una ceremonia ritual de madrugada','Los envenenaron con la comida que les prepararon los capataces','Los asesinaron durante una batalla mientras intentaban escapar por el río'],
+ ex:'El testimonio describe con precisión la trampa: fingieron hospitalidad ("Bienvenidos, cuelguen sus hamacas"), esperaron a que todos durmieran y apilaron caucho para usarlo como combustible. La traición nocturna fue el método del exterminio del clan Bofaiza.'},
+
+/* 18 · Inferencial */
+{lv:'Inferencial',lc:'b-inf',
+ pass:'Una mujer indígena dice a Rember: "Su abuela le enseñó todo. Él está conectado con nosotros. Por eso ha venido a nosotros. Está buscando su propia palabra." Otra mujer añade: "No queremos que tu corazón se enfríe para que puedas continuar con la dulce palabra y difundir la palabra de nuestros antepasados. Queremos que le cuentes al mundo quiénes somos."',
+ q:'¿Qué papel le asignan colectivamente las mujeres de La Chorrera a Rember dentro de la comunidad Witoto?',
+ ok:'El de portavoz ante el mundo: alguien que lleva la palabra viva de sus ancestros y la comparte más allá de la Amazonía',
+ d:['El de líder político que debe negociar con el gobierno colombiano por sus tierras','El de maestro que debe quedarse en La Chorrera a enseñar a los niños del pueblo','El de investigador académico que debe escribir libros sobre la historia Witoto'],
+ ex:'Las mujeres no le piden a Rember que se quede ni que gobierne: le piden que "le cuente al mundo quiénes son". Su rol es el de mensajero cultural hacia afuera. La expresión "dulce palabra" vincula esa misión con la tradición oral y con la enseñanza de Martha.'},
+
+/* 19 · Crítico */
+{lv:'Crítico',lc:'b-cri',
+ pass:'Rember dice emocionado frente a las mujeres de La Chorrera: "Cuando te veo pienso en mi abuela. Me recuerdas a Martha. De donde yo vengo, allí en el río Ampiyacu, ya no hay abuelas. Todos se han ido. Todos están descansando."',
+ q:'¿Qué reflexión crítica surge al contrastar que en el río Ampiyacu "ya no hay abuelas" mientras en La Chorrera aún existen mujeres que guardan la memoria viva?',
+ ok:'Revela que el desplazamiento forzado del caucho fragmentó la transmisión oral: donde hubo más violencia, la memoria viva desapareció más rápido',
+ d:['Demuestra que las mujeres peruanas no valoran la cultura tanto como las colombianas','Indica que Rember olvidó a sus abuelas peruanas al conocer las de La Chorrera','Sugiere que la memoria cultural solo sobrevive en comunidades que no han tenido contacto con ciudades'],
+ ex:'La ausencia de abuelas en el Ampiyacu y su presencia en La Chorrera no es aleatoria: refleja el impacto diferenciado del genocidio cauchero. Donde la violencia fue más intensa, la cadena generacional de transmisión oral se rompió. Esto convierte la misión de Rember en urgente e irreemplazable.'},
+
+/* ══ BLOQUE 6: RETORNO A LIMA ════════════════════
+   Fuente: guion — Rember regresa, taller,
+   lienzo en blanco, reflexión final.
+   ═════════════════════════════════════════════════ */
+
+/* 20 · Crítico */
+{lv:'Crítico',lc:'b-cri',
+ pass:'De regreso en Lima, Rember acomoda un gran lienzo en blanco sobre el piso, se sienta frente a él y dice: "Creo que si mi abuela estaría justo delante de mí en este momento, creo que ella me miraría y sonreiría. Y ella simplemente me abrazaría. Y probablemente lloraría. No creo que ella dijera nada más."',
+ q:'¿Por qué crees que el guion termina con un lienzo en blanco y no con una obra terminada?',
+ ok:'Porque simboliza que la misión de preservar la memoria del pueblo Witoto es continua y abierta: cada generación debe llenarla, nunca se cierra',
+ d:['Porque Rember se quedó sin materiales de pintura después del largo viaje','Porque el guion indica que Rember decidió abandonar la pintura tras el impacto emocional','Porque un lienzo en blanco es más fácil de filmar que una obra acabada'],
+ ex:'El lienzo en blanco es la metáfora final del documental: la historia de un pueblo no tiene punto final. Rember comprendió su misión, pero esa obra siempre estará abierta para quien decida continuarla. La sonrisa imaginada de Martha confirma que él cumplió: llegó a entender "para qué" pinta.'}
+
+];
+
+
+
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+let pName='',pGrade='',pSection='';
+let questions=[],curQ=0,score=0,selOpt=null,answered=false;
+let timerInt=null,timeLeft=120,gameActive=false,attemptCount=0;
+
+const MOTS=[
+  '"{n}", cada respuesta correcta ilumina la memoria de un pueblo. ¡Tú puedes!',
+  '¡Las mariposas de la Amazonía te acompañan, {n}! Sigue adelante con confianza.',
+  'La sabiduría de los ancestros te guía, {n}. ¡Confía en tu preparación!',
+  '¡Excelente, {n}! Cada pregunta que respondes es un paso más en tu viaje.',
+  'Como Rember, tú también eres guardián/a de la memoria. ¡Adelante, {n}!'
+];
+function motive(){return MOTS[Math.floor(Math.random()*MOTS.length)].replace('{n}',pName);}
+function shuffle(a){return a.sort(()=>Math.random()-.5);}
+function buildQs(){
+  // Orden cronológico estricto: NO se mezclan las preguntas, solo las opciones A/B/C/D.
+  return RAW.map(q=>({...q,opts:shuffle([q.ok,...q.d])}));
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function atkKey(){return'atk_'+pName.toLowerCase().replace(/\s/g,'_');}
+
+// ══════════════════════════════════════════════════
+// WIRE UP
+// ══════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('btnStart').addEventListener('click',startGame);
+  document.getElementById('btnGoGame').addEventListener('click',goToGame);
+  document.getElementById('btnSend').addEventListener('click',sendAnswer);
+  document.getElementById('btnNext').addEventListener('click',nextQuestion);
+  document.getElementById('btnRestart').addEventListener('click',restartGame);
+  document.getElementById('btnExit').addEventListener('click',exitGame);
+  document.getElementById('btnCert').addEventListener('click',downloadCert);
+  document.getElementById('btnCSV').addEventListener('click',exportCSV);
+});
+
+// ══════════════════════════════════════════════════
+// START
+// ══════════════════════════════════════════════════
+function startGame(){
+  pName=document.getElementById('iName').value.trim();
+  pGrade=document.getElementById('iGrade').value.trim();
+  pSection=document.getElementById('iSection').value.trim();
+  if(!pName){alert('Por favor, escribe tu nombre completo.');return;}
+  if(!pGrade){alert('Por favor, escribe tu grado.');return;}
+  if(!pSection){alert('Por favor, escribe tu sección.');return;}
+
+  attemptCount=(parseInt(localStorage.getItem(atkKey())||'0'))+1;
+  localStorage.setItem(atkKey(),attemptCount);
+  const badge=document.getElementById('attemptBadge');
+  if(attemptCount>=2){
+    const sx={2:'2do.',3:'3er.',4:'4to.',5:'5to.',6:'6to.',7:'7mo.',8:'8vo.'};
+    badge.textContent=(sx[attemptCount]||(attemptCount+'mo.'))+' Intento';
+    badge.style.display='block';
+  }
+
+  document.getElementById('wTitle').textContent='¡Bienvenido/a, '+pName+'!';
+  document.getElementById('wMsg').innerHTML=
+    'Hoy emprenderás un viaje por la memoria amazónica junto a <strong>Rember Yahuarcani</strong>, artista Witoto.<br><br>'+
+    '🦋 <strong>20 preguntas</strong> extraídas fielmente del documental <em>"El Canto de las Mariposas"</em>.<br>'+
+    '⏱️ Cada pregunta tiene <strong>2 minutos</strong> para responder.<br>'+
+    '🌿 Niveles: Literal · Inferencial · Crítico · Socrático<br><br>'+
+    '¡Demuestra tu comprensión y gana tu reconocimiento, '+pName+'!';
+  document.getElementById('wMot').textContent=motive();
+  showScreen('sWelcome');
+}
+
+function goToGame(){
+  gameActive=true; visGuard=true;
+  questions=buildQs();
+  curQ=0; score=0;
+  loadQ();
+  showScreen('sQuestion');
+}
+
+// ══════════════════════════════════════════════════
+// QUESTION
+// ══════════════════════════════════════════════════
+function loadQ(){
+  answered=false; selOpt=null;
+  const q=questions[curQ];
+  const pct=(curQ/20)*100;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progText').textContent='Pregunta '+(curQ+1)+' / 20';
+  document.getElementById('scoreBadge').textContent=score+' pts';
+
+  const lb=document.getElementById('levelBadge');
+  lb.textContent='Nivel '+q.lv;
+  lb.className=q.lc;
+
+  document.getElementById('passageTxt').textContent='"'+q.pass+'"';
+  document.getElementById('questionTxt').textContent=(curQ+1)+'. '+q.q;
+
+  const c=document.getElementById('optsCont');
+  c.innerHTML='';
+  ['A','B','C','D'].forEach((ltr,i)=>{
+    const d=document.createElement('div');
+    d.className='option';
+    d.innerHTML=`<span class="opt-ltr">${ltr}</span><span>${q.opts[i]}</span>`;
+    d.addEventListener('click',()=>pickOpt(d,q.opts[i]));
+    c.appendChild(d);
+  });
+
+  document.getElementById('feedback').style.display='none';
+  document.getElementById('feedback').className='';
+  document.getElementById('btnSend').disabled=true;
+  document.getElementById('btnNext').disabled=true;
+  startTimer();
+}
+
+function pickOpt(div,opt){
+  if(answered)return;
+  document.querySelectorAll('.option').forEach(o=>o.classList.remove('selected'));
+  div.classList.add('selected');
+  selOpt=opt;
+  document.getElementById('btnSend').disabled=false;
+}
+
+// ══════════════════════════════════════════════════
+// TIMER
+// ══════════════════════════════════════════════════
+function startTimer(){
+  clearInterval(timerInt);timeLeft=120;renderTimer();
+  timerInt=setInterval(()=>{timeLeft--;renderTimer();if(timeLeft<=0)timeUp();},1000);
+}
+function renderTimer(){
+  const b=document.getElementById('timerBox');
+  const m=Math.floor(timeLeft/60),s=timeLeft%60;
+  b.textContent=m+':'+(s<10?'0':'')+s;
+  b.className=timeLeft>80?'':(timeLeft>40?'orange':'red');
+}
+function timeUp(){
+  clearInterval(timerInt);beep();lockOpts();
+  document.getElementById('btnSend').disabled=true;
+  document.getElementById('btnNext').disabled=false;
+  const fb=document.getElementById('feedback');
+  fb.className='wrong';fb.style.display='block';
+  fb.innerHTML='⏰ <strong>¡Tiempo agotado, '+pName+'!</strong><br>La respuesta correcta era: <em>'+questions[curQ].ok+'</em><br><br>'+questions[curQ].ex;
+}
+function beep(){
+  try{
+    const ac=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.connect(g);g.connect(ac.destination);
+    o.frequency.value=440;g.gain.value=0.2;
+    o.start();g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.7);
+    o.stop(ac.currentTime+0.8);
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════════════
+// SEND
+// ══════════════════════════════════════════════════
+function sendAnswer(){
+  if(!selOpt||answered)return;
+  clearInterval(timerInt);answered=true;
+  const q=questions[curQ];
+  const ok=(selOpt===q.ok);
+  if(ok)score+=5;
+  lockOpts();
+  document.querySelectorAll('.option').forEach(d=>{
+    const t=d.querySelector('span:last-child').textContent;
+    if(t===q.ok)d.classList.add('correct');
+    else if(t===selOpt&&!ok)d.classList.add('wrong');
+  });
+  const fb=document.getElementById('feedback');
+  fb.style.display='block';
+  if(ok){
+    const praises=['¡Correcto, '+pName+'! Excelente razonamiento. 🦋',
+      '¡Muy bien, '+pName+'! Esa es la respuesta. ✨',
+      '¡Exacto, '+pName+'! Sigues adelante con fuerza. 🌿'];
+    fb.className='correct';
+    fb.innerHTML='✅ <strong>'+praises[curQ%3]+'</strong><br><br>'+q.ex;
+  } else {
+    fb.className='wrong';
+    fb.innerHTML='❌ <strong>¡No te rindas, '+pName+'!</strong> La respuesta correcta era:<br><em>'+q.ok+'</em><br><br>'+q.ex;
+  }
+  document.getElementById('btnSend').disabled=true;
+  document.getElementById('btnNext').disabled=false;
+  document.getElementById('scoreBadge').textContent=score+' pts';
+}
+
+function lockOpts(){
+  document.querySelectorAll('.option').forEach(o=>{
+    o.classList.add('disabled');o.style.pointerEvents='none';
+  });
+}
+
+function nextQuestion(){
+  document.getElementById('feedback').style.display='none';
+  curQ++;
+  if(curQ>=20){showFinal();return;}
+  loadQ();
+}
+
+// ══════════════════════════════════════════════════
+// FINAL
+// ══════════════════════════════════════════════════
+const AWARDS=[
+  {min:90,icon:'🏆',title:'🏆 Galardón a la Excelencia Académica 🌟🌟🌟',level:'AD',
+   msg:'¡Desempeño excepcional, {n}! Alcanzaste el Nivel de Logro Destacado. Tu comprensión del documental es sobresaliente. Las mariposas de los ancestros celebran contigo. 🦋✨'},
+  {min:75,icon:'🏅',title:'🏅 Mención al Éxito Sostenido 🌟🌟',level:'A',
+   msg:'¡Excelente, {n}! Cumpliste con éxito los objetivos y alcanzaste el Nivel de Logro Esperado. Tu constancia es admirable. ¡Sigue profundizando tu comprensión!'},
+  {min:55,icon:'📈',title:'📈 Mención al Progreso Constante 🌟',level:'B',
+   msg:'¡Buen esfuerzo, {n}! Estás en un Sólido Proceso de Consolidación. Identifica las preguntas que fallaste, vuelve a leer los textos y ¡lo lograrás!'},
+  {min:0,icon:'📝',title:'📝 Mención al Impulso Inicial',level:'C',
+   msg:'¡Cada comienzo es valioso, {n}! Das tus primeros pasos hacia el saber. Te sugerimos: leer con más calma, identificar ideas principales y volver a intentarlo. ¡Tú puedes!'}
+];
+
+function showFinal(){
+  clearInterval(timerInt);gameActive=false;visGuard=false;
+  showScreen('sFinal');
+  const pct=Math.round((score/100)*100);
+  const aw=AWARDS.find(a=>pct>=a.min);
+  document.getElementById('awardIcon').textContent=aw.icon;
+  document.getElementById('fName').textContent=pName+' · '+pGrade+'° Sección '+pSection;
+  document.getElementById('fScore').textContent=score+' / 100 pts';
+  document.getElementById('fPct').textContent=pct+'% de respuestas correctas · Nivel '+aw.level;
+  document.getElementById('awardTitle').textContent=aw.title;
+  document.getElementById('awardMsg').textContent=aw.msg.replace('{n}',pName);
+
+  const recs=JSON.parse(localStorage.getItem('cmR2')||'[]');
+  recs.push({name:pName,grade:pGrade,section:pSection,score,pct,award:aw.title,level:aw.level,attempts:attemptCount,date:new Date().toLocaleString('es-PE')});
+  localStorage.setItem('cmR2',JSON.stringify(recs));
+  buildLB();
+}
+
+function buildLB(){
+  const recs=JSON.parse(localStorage.getItem('cmR2')||'[]');
+  const best={};
+  recs.forEach(r=>{if(!best[r.name]||r.pct>best[r.name].pct)best[r.name]=r;});
+  const sorted=Object.values(best).sort((a,b)=>b.pct-a.pct).slice(0,10);
+  const tb=document.getElementById('lbBody');tb.innerHTML='';
+  sorted.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${i+1}</td><td>${r.name}</td><td>${r.score}/100</td><td>${r.pct}%</td><td>${r.attempts}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function exportCSV(){
+  const recs=JSON.parse(localStorage.getItem('cmR2')||'[]');
+  if(!recs.length){alert('No hay datos registrados aún.');return;}
+  let csv='Nombre,Grado,Sección,Puntaje,Porcentaje,Reconocimiento,Nivel,Intentos,Fecha\n';
+  recs.forEach(r=>{csv+=`"${r.name}","${r.grade}","${r.section}",${r.score},${r.pct}%,"${r.award}","${r.level}",${r.attempts},"${r.date}"\n`;});
+  const b=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=url;a.download='resultados_canto_mariposas.csv';a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ══════════════════════════════════════════════════
+// CERTIFICATE  –  texto exacto según instrucciones
+// ══════════════════════════════════════════════════
+function downloadCert(){
+  const pct = Math.round((score/100)*100);
+  const cv  = document.getElementById('certCanvas');
+  const ctx = cv.getContext('2d');
+  const W=900, H=660;
+  cv.width=W; cv.height=H;
+
+  /* ── helpers ── */
+  function wrapText(text, x, maxW, lineH){
+    // Returns array of {line, y} given a starting y accumulated externally
+    const words=text.split(' '), lines=[];
+    let cur='';
+    words.forEach(w=>{
+      const test=cur?cur+' '+w:w;
+      if(ctx.measureText(test).width>maxW&&cur){lines.push(cur);cur=w;}
+      else cur=test;
+    });
+    if(cur)lines.push(cur);
+    return lines;
+  }
+  function centeredLines(lines, startY, lineH){
+    lines.forEach((l,i)=>{ctx.fillText(l, W/2, startY+i*lineH);});
+    return startY+lines.length*lineH;
+  }
+
+  /* ── background ── */
+  const gBg=ctx.createLinearGradient(0,0,W,H);
+  gBg.addColorStop(0,'#050d1a');
+  gBg.addColorStop(0.5,'#071a0e');
+  gBg.addColorStop(1,'#0d0a1f');
+  ctx.fillStyle=gBg; ctx.fillRect(0,0,W,H);
+
+  /* ── decorative background pattern ── */
+  ctx.fillStyle='rgba(212,175,55,0.03)';
+  for(let i=0;i<W;i+=40) for(let j=0;j<H;j+=40){
+    ctx.beginPath();ctx.arc(i,j,1,0,Math.PI*2);ctx.fill();
+  }
+
+  /* ── outer gold border ── */
+  ctx.strokeStyle='#d4af37'; ctx.lineWidth=7;
+  roundRect(ctx,12,12,W-24,H-24,16); ctx.stroke();
+  ctx.strokeStyle='rgba(212,175,55,0.35)'; ctx.lineWidth=2;
+  roundRect(ctx,24,24,W-48,H-48,10); ctx.stroke();
+
+  /* ── corner butterflies ── */
+  ctx.font='28px serif';
+  [[52,52],[W-52,52],[52,H-52],[W-52,H-52]].forEach(([x,y])=>{
+    ctx.textAlign='center'; ctx.fillText('🦋',x,y+8);
+  });
+
+  /* ── top ornamental line ── */
+  ctx.textAlign='center';
+  ctx.fillStyle='#d4af37'; ctx.font='13px Georgia,serif';
+  ctx.fillText('✦  ·  ✦  ·  ✦  ·  ✦  ·  ✦  ·  ✦  ·  ✦  ·  ✦  ·  ✦  ·  ✦',W/2,68);
+
+  /* ════════════════════════════════════════════════
+     CONTENIDO SEGÚN NIVEL — texto exacto indicado
+  ════════════════════════════════════════════════ */
+  let y=0; // running cursor
+
+  /* ── 1. CERTIFICADO DE LOGRO ── */
+  ctx.fillStyle='#f5e68a';
+  ctx.font='bold 30px Georgia,serif';
+  ctx.fillText('CERTIFICADO DE LOGRO', W/2, 102);
+
+  /* ── separator ── */
+  ctx.strokeStyle='rgba(212,175,55,0.5)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(110,116); ctx.lineTo(W-110,116); ctx.stroke();
+
+  /* ── 2. Encabezado del reconocimiento (emoji + título + estrellas) ── */
+  if(pct>=90){
+    ctx.fillStyle='#ffd700'; ctx.font='bold 22px Georgia,serif';
+    ctx.fillText('🏆 Mención de Honor y Distinción 🌟🌟🌟', W/2, 148);
+  } else if(pct>=75){
+    ctx.fillStyle='#e8e0cc'; ctx.font='bold 22px Georgia,serif';
+    ctx.fillText('🏅 Reconocimiento al Cumplimiento Eficaz 🌟🌟', W/2, 148);
+  } else if(pct>=55){
+    ctx.fillStyle='#90caf9'; ctx.font='bold 22px Georgia,serif';
+    ctx.fillText('📈 Enfoque de Evolución y Desarrollo Continuo 🌟', W/2, 148);
+  } else {
+    ctx.fillStyle='#a5d6a7'; ctx.font='bold 22px Georgia,serif';
+    ctx.fillText('📝 Enfoque de Desafío y Nuevos Comienzos', W/2, 148);
+  }
+
+  /* ── separator ── */
+  ctx.strokeStyle='rgba(212,175,55,0.35)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(140,163); ctx.lineTo(W-140,163); ctx.stroke();
+
+  /* ── 3. "Se otorga el reconocimiento a:" ── */
+  ctx.fillStyle='rgba(200,184,120,0.85)';
+  ctx.font='italic 15px Georgia,serif';
+  ctx.fillText('Se otorga el reconocimiento a:', W/2, 192);
+
+  /* ── 4. Nombre del participante + grado y sección ── */
+  ctx.fillStyle='#ffffff';
+  ctx.font='bold 28px Georgia,serif';
+  ctx.fillText(pName, W/2, 230);
+
+  ctx.fillStyle='#c8b87a';
+  ctx.font='15px Georgia,serif';
+  ctx.fillText(pGrade+'° Grado  –  Sección '+pSection, W/2, 256);
+
+  /* ── 5. Texto del cuerpo — exactamente el indicado por nivel ── */
+  ctx.fillStyle='rgba(220,205,160,0.9)';
+  ctx.font='14px Georgia,serif';
+  const maxW=660;
+
+  if(pct>=90){
+    // Galardón a la Excelencia Académica
+    const lines1=wrapText('Por superar con distinción y en mérito a su desempeño excepcional y haber alcanzado el:', W/2, maxW, 22);
+    y=centeredLines(lines1, 288, 22);
+    ctx.fillStyle='#ffd700'; ctx.font='bold 15px Georgia,serif';
+    ctx.fillText('Nivel de Logro Destacado (AD).', W/2, y+10);
+    y+=34;
+
+  } else if(pct>=75){
+    // Mención al Éxito Sostenido
+    const lines1=wrapText('Por cumplir satisfactoriamente con los objetivos y en mérito a su constancia y haber alcanzado con éxito el:', W/2, maxW, 22);
+    ctx.fillStyle='rgba(220,205,160,0.9)'; ctx.font='14px Georgia,serif';
+    y=centeredLines(lines1, 288, 22);
+    ctx.fillStyle='#f5e68a'; ctx.font='bold 15px Georgia,serif';
+    ctx.fillText('Nivel de Logro Esperado (A).', W/2, y+10);
+    y+=34;
+
+  } else if(pct>=55){
+    // Mención al Progreso Constante
+    const lines1=wrapText('En reconocimiento a la dedicación y el avance diario y en mérito a su valioso esfuerzo diario y encontrarse en un:', W/2, maxW, 22);
+    ctx.fillStyle='rgba(220,205,160,0.9)'; ctx.font='14px Georgia,serif';
+    y=centeredLines(lines1, 288, 22);
+    ctx.fillStyle='#90caf9'; ctx.font='bold 15px Georgia,serif';
+    ctx.fillText('Sólido proceso de consolidación (B).', W/2, y+10);
+    y+=34;
+
+  } else {
+    // Mención al Impulso Inicial
+    const lines1=wrapText('En reconocimiento al valor de dar los primeros pasos hacia el saber y a su valiosa disposición para:', W/2, maxW, 22);
+    ctx.fillStyle='rgba(220,205,160,0.9)'; ctx.font='14px Georgia,serif';
+    y=centeredLines(lines1, 288, 22);
+    ctx.fillStyle='#a5d6a7'; ctx.font='bold 15px Georgia,serif';
+    ctx.fillText('Iniciar el desarrollo de nuevas competencias (C).', W/2, y+10);
+    y+=34;
+  }
+
+  /* ── separator ── */
+  const boxTop = Math.max(y+14, 370);
+  ctx.strokeStyle='rgba(212,175,55,0.3)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(140, boxTop-4); ctx.lineTo(W-140, boxTop-4); ctx.stroke();
+
+  /* ── 6. Caja de datos: Reconocimiento · Puntaje · Fecha ── */
+  const boxH=90;
+  roundRect(ctx, W/2-240, boxTop, 480, boxH, 10);
+  ctx.fillStyle='rgba(212,175,55,0.06)'; ctx.fill();
+  ctx.strokeStyle='rgba(212,175,55,0.28)'; ctx.lineWidth=1; ctx.stroke();
+
+  // Reconocimiento obtenido
+  const awLabel = pct>=90 ? '🏆 Galardón a la Excelencia Académica 🌟🌟🌟'
+    : pct>=75 ? '🏅 Mención al Éxito Sostenido 🌟🌟'
+    : pct>=55 ? '📈 Mención al Progreso Constante 🌟'
+    : '📝 Mención al Impulso Inicial';
+
+  ctx.fillStyle='#d4af37'; ctx.font='bold 13px Georgia,serif';
+  ctx.fillText('Reconocimiento obtenido: '+awLabel, W/2, boxTop+24);
+
+  // Puntaje obtenido: nº preguntas correctas
+  const correct=score/5;
+  ctx.fillStyle='#e8e0cc'; ctx.font='13px Georgia,serif';
+  ctx.fillText('Puntaje obtenido: '+score+' puntos  ('+correct+' de 20 preguntas correctas  –  '+pct+'%)', W/2, boxTop+46);
+
+  // Fecha
+  ctx.fillStyle='#b8a878'; ctx.font='12px Georgia,serif';
+  const fechaStr=new Date().toLocaleDateString('es-PE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  ctx.fillText('Fecha: '+fechaStr.charAt(0).toUpperCase()+fechaStr.slice(1), W/2, boxTop+68);
+
+  /* ── 7. Sello circular ── */
+  const sealY = boxTop+boxH+70;
+  ctx.fillStyle='rgba(212,175,55,0.1)';
+  ctx.beginPath(); ctx.arc(W/2, sealY, 52, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#d4af37'; ctx.lineWidth=2; ctx.stroke();
+  // Inner ring
+  ctx.strokeStyle='rgba(212,175,55,0.4)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.arc(W/2, sealY, 44, 0, Math.PI*2); ctx.stroke();
+  ctx.fillStyle='#d4af37'; ctx.font='bold 10px Arial,sans-serif'; ctx.textAlign='center';
+  ctx.fillText('ARTE Y CULTURA', W/2, sealY-6);
+  ctx.fillText('PERÚ', W/2, sealY+8);
+  ctx.font='20px serif';
+  ctx.fillText('🦋', W/2, sealY+28);
+
+  /* ── 8. Frase final ── */
+  ctx.fillStyle='rgba(180,160,100,0.55)';
+  ctx.font='italic 12px Georgia,serif';
+  ctx.fillText('"Mientras existan personas dispuestas a recordar, cantar, pintar y contar las historias de sus ancestros, un pueblo nunca desaparece."', W/2, sealY+70);
+
+  /* ── 9. Intento ── */
+  ctx.fillStyle='rgba(140,120,70,0.5)';
+  ctx.font='10px Arial,sans-serif';
+  ctx.fillText('N° de intento: '+attemptCount, W/2, sealY+90);
+
+  /* ── bottom ornament ── */
+  ctx.fillStyle='rgba(212,175,55,0.4)';
+  ctx.font='13px Georgia,serif';
+  ctx.fillText('✦  ·  ✦  ·  ✦  ·  ✦  ·  ✦  ·  ✦  ·  ✦  ·  ✦  ·  ✦  ·  ✦', W/2, H-22);
+
+  /* ── download ── */
+  const lnk=document.createElement('a');
+  lnk.download='Certificado_'+pName.replace(/\s/g,'_')+'.png';
+  lnk.href=cv.toDataURL('image/png'); lnk.click();
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+// ══════════════════════════════════════════════════
+// RESTART / EXIT
+// ══════════════════════════════════════════════════
+function restartGame(){
+  clearInterval(timerInt);gameActive=false;visGuard=false;
+  document.getElementById('iName').value='';
+  document.getElementById('iGrade').value='';
+  document.getElementById('iSection').value='';
+  document.getElementById('attemptBadge').style.display='none';
+  showScreen('sIntro');
+}
+function exitGame(){
+  if(confirm('¿Seguro que deseas salir del juego?')){
+    clearInterval(timerInt);
+    document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#050d1a;color:#d4af37;font-family:Georgia,serif;font-size:1.4rem;text-align:center;padding:24px;">🦋<br><br>Gracias por participar, '+pName+'.<br><br><em style="font-size:1rem;color:#b8a878;">"Mientras existan personas dispuestas a recordar, un pueblo nunca desaparece."</em></div>';
+    setTimeout(()=>window.close(),3000);
+  }
+}
+</script>
+</body>
+</html>
